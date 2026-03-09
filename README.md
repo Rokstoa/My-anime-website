@@ -1,527 +1,781 @@
-```markdown
-# 🎬 Anime Streaming Platform - Платформа для перегляду аніме
+# 🎬 Anime Streaming Platform — Платформа для перегляду аніме
 
-Сучасна веб-платформа для перегляду аніме з інтеграцією Telegram бота, real-time сповіщеннями та розширеними функціями для користувачів.
+> Сучасна веб-платформа для перегляду аніме з інтеграцією Telegram бота, real-time сповіщеннями та розширеними функціями для користувачів.
+
+<div align="center">
+
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/Django-5.0-092E20?style=for-the-badge&logo=django&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+
+</div>
+
+---
 
 ## 📋 Зміст
 
-- [Особливості](#особливості)
-- [Структура Проекту](#структура-проекту)
-- [Технології](#технології)
-- [Встановлення](#встановлення)
-- [Конфігурація](#конфігурація)
-- [Запуск](#запуск)
-- [API Документація](#api-документація)
-- [Telegram Бот](#telegram-бот)
+- [✨ Особливості](#-особливості)
+- [📁 Структура Проекту](#-структура-проекту)
+- [🛠️ Технології](#️-технології)
+- [⚙️ Встановлення](#️-встановлення)
+- [🔧 Конфігурація](#-конфігурація)
+- [🚀 Запуск](#-запуск)
+- [📡 API Документація](#-api-документація)
+- [🤖 Telegram Бот](#-telegram-бот)
+- [🗄️ Моделі Бази Даних](#️-моделі-бази-даних)
+- [🔔 WebSocket & Сповіщення](#-websocket--сповіщення)
+- [⚡ Celery Tasks](#-celery-tasks)
+- [🎨 Адмін-панель](#-адмін-панель)
+- [🧪 Тестування](#-тестування)
+- [🚢 Деплой](#-деплой)
 
 ---
 
 ## ✨ Особливості
 
-### Для користувачів:
-- 🎥 Перегляд аніме у високій якостості (HLS стрімінг)
-- 📝 Персональні списки перегляду (6 статусів)
-- 💬 Коментарі з threading (деревоподібна структура)
-- ⭐ Оцінки та рецензії на аніме
-- 🔔 Real-time сповіщення через WebSocket
-- 📱 Інтеграція з Telegram
-- 🎯 Персональні рекомендації
-- 💾 Збереження прогресу перегляду
+### Для користувачів
+| Функція | Опис |
+|---------|------|
+| 🎥 HLS Стрімінг | Перегляд аніме у高якості з адаптивним бітрейтом |
+| 📝 Списки перегляду | 6 статусів: Дивлюсь / Переглянуто / Відкладено / Покинуто / Планую / Передивляюсь |
+| 💬 Коментарі | Threaded система з реакціями та захистом від спойлерів |
+| ⭐ Оцінки | Система оцінювання 1–10 з агрегованим рейтингом |
+| 🔔 Сповіщення | Real-time через WebSocket + Telegram |
+| 📱 Telegram Bot | Пошук, управління списками, сповіщення |
+| 💾 Прогрес | Збереження позиції перегляду для кожної серії |
+| 🏆 Досягнення | Система нагород за активність |
+| 🎯 Рекомендації | Персоналізовані рекомендації на основі перегляду |
+| 🔐 OAuth | Вхід через Google та Discord |
 
-### Технічні можливості:
-- REST API з JWT авторизацією
-- Real-time оновлення через Channels
-- Фонові задачі через Celery
-- Автоматичні сповіщення про нові серії
-- Пошук через Telegram бота
-- HLS відео плеєр власної розробки
+### Технічні можливості
+| Функція | Технологія |
+|---------|-----------|
+| REST API | DRF + JWT авторизація |
+| Real-time | Django Channels + Redis |
+| Фонові задачі | Celery + Celery Beat |
+| Пошук | Full-text search + inline Telegram |
+| Кешування | Redis із автоінвалідацією |
+| Медіа | Автоконвертація у WebP, thumbnails |
+| Деплой | Docker Compose + Nginx + SSL |
 
 ---
 
 ## 📁 Структура Проекту
 
 ```
-
-My-anime-website/
-├── config/                          # Головна конфігурація Django проекту
-│   ├── asgi.py                     # ASGI конфігурація для WebSocket та Channels
-│   ├── settings.py                 # Основні налаштування проекту
-│   ├── urls.py                     # Головні URL маршрути
-│   └── wsgi.py                     # WSGI конфігурація для production
+animex/
 │
-├── apps/                           # Django додатки
+├── 📁 config/                          # ⚙️ Конфігурація Django
+│   ├── 📁 settings/
+│   │   ├── base.py                     # Базові налаштування (спільні)
+│   │   ├── development.py              # Dev: SQLite, debug toolbar, console email
+│   │   └── production.py              # Prod: PostgreSQL, S3, Sentry, SSL
+│   ├── urls.py                         # Кореневі URL маршрути
+│   ├── asgi.py                         # ASGI + Django Channels (WebSocket)
+│   ├── wsgi.py                         # WSGI для Gunicorn
+│   └── celery.py                       # Celery app + розклад periodic tasks
+│
+├── 📁 apps/
 │   │
-│   ├── anime/                      # Додаток аніме
-│   │   ├── models.py              # Моделі: Anime, Episode, Genre, Studio, Translation, VideoSource, UserRating
-│   │   ├── views.py               # Views для перегляду аніме
-│   │   ├── urls.py                # URL маршрути аніме
-│   │   ├── admin.py               # Admin панель для аніме
-│   │   └── services/              # Бізнес-логіка та сервіси
+│   ├── 📁 anime/                       # 🎬 Ядро — аніме каталог
+│   │   ├── models.py                   # Anime, Episode, Genre, Studio,
+│   │   │                               # Translation, VideoSource, UserRating,
+│   │   │                               # Screenshot, RelatedAnime
+│   │   ├── admin.py                    # Jazzmin-адмінка з прев'ю обкладинок,
+│   │   │                               # batch-публікацією та авто-сповіщеннями
+│   │   ├── views.py                    # Каталог, деталі, плеєр, рейтинги
+│   │   ├── urls.py
+│   │   ├── filters.py                  # Фільтри каталогу (жанр, рік, тип...)
+│   │   ├── signals.py                  # Тригери на оновлення рейтингу
+│   │   ├── context_processors.py       # Глобальний контекст шаблонів
+│   │   ├── sitemaps.py                 # XML Sitemap для SEO
+│   │   ├── 📁 migrations/
+│   │   └── 📁 templatetags/
+│   │       ├── anime_tags.py           # {% rating_stars %}, {% watch_progress %}
+│   │       └── player_tags.py          # {% embed_player %}
 │   │
-│   ├── users/                      # Додаток користувачів
-│   │   ├── models.py              # Кастомна модель User з Telegram-прив'язкою
-│   │   │                          # Achievement - досягнення користувачів
-│   │   │                          # UserSettings - налаштування користувача
-│   │   ├── views.py               # Реєстрація, профіль, налаштування
-│   │   ├── serializers.py         # Серіалізатори для API
-│   │   └── admin.py               # Admin панель користувачів
+│   ├── 📁 users/                       # 👤 Користувачі та профілі
+│   │   ├── models.py                   # User (AbstractUser), UserAchievement,
+│   │   │                               # TelegramLinkToken
+│   │   ├── admin.py
+│   │   ├── views.py                    # Профіль, налаштування, підписки
+│   │   ├── urls.py
+│   │   ├── forms.py                    # Реєстрація, редагування профілю
+│   │   ├── serializers.py
+│   │   └── 📁 migrations/
 │   │
-│   ├── watchlist/                  # Додаток списків перегляду
-│   │   ├── models.py              # WatchList (6 статусів)
-│   │   │                          # EpisodeProgress - збереження позиції перегляду
-│   │   │                          # Collection - колекції аніме
-│   │   ├── views.py               # Управління списками
-│   │   └── admin.py               # Admin панель
+│   ├── 📁 watchlist/                   # 📋 Списки перегляду
+│   │   ├── models.py                   # WatchList, EpisodeProgress, Collection,
+│   │   │                               # CollectionItem
+│   │   ├── views.py                    # CRUD списків, прогрес серій
+│   │   ├── urls.py
+│   │   ├── serializers.py
+│   │   └── 📁 migrations/
 │   │
-│   ├── comments/                   # Додаток коментарів
-│   │   ├── models.py              # Comment (MPTT дерево)
-│   │   │                          # Reaction - реакції на коментарі
-│   │   │                          # CommentReport - скарги на коментарі
-│   │   ├── views.py               # CRUD для коментарів
-│   │   └── admin.py               # Модерація коментарів
+│   ├── 📁 comments/                    # 💬 Коментарі
+│   │   ├── models.py                   # Comment (MPTT), CommentReaction,
+│   │   │                               # CommentReport
+│   │   ├── views.py                    # Додавання, редагування, реакції
+│   │   ├── urls.py
+│   │   ├── serializers.py
+│   │   └── 📁 migrations/
 │   │
-│   ├── notifications/              # Додаток сповіщень
-│   │   ├── models.py              # Notification - сповіщення
-│   │   │                          # WebSocketMessage - WebSocket повідомлення
-│   │   ├── consumers.py           # WebSocket Consumer для real-time
-│   │   ├── tasks.py               # Завдання для відправки сповіщень
-│   │   └── admin.py               # Admin панель сповіщень
+│   ├── 📁 notifications/               # 🔔 Сповіщення
+│   │   ├── models.py                   # Notification, NotificationPreference
+│   │   ├── consumers.py                # WebSocket Consumer (real-time push)
+│   │   ├── routing.py                  # WS URL patterns
+│   │   ├── services.py                 # Логіка відправки (site/telegram/email)
+│   │   ├── views.py
+│   │   ├── urls.py
+│   │   └── 📁 migrations/
 │   │
-│   └── api/                        # API додаток
-│       ├── views.py               # API ViewSets: AnimeViewSet, EpisodeViewSet, WatchListViewSet
-│       │                          # CommentViewSet, NotificationViewSet, SearchView
-│       ├── serializers.py         # API серіалізатори
-│       ├── urls.py                # API URL маршрути
-│       ├── permissions.py         # Кастомні дозволи
-│       └── pagination.py          # Кастомна пагінація
+│   ├── 📁 search/                      # 🔍 Пошук
+│   │   ├── views.py                    # Full-text пошук по базі
+│   │   ├── urls.py
+│   │   └── 📁 migrations/
+│   │
+│   └── 📁 api/
+│       └── 📁 v1/                      # 📡 REST API v1
+│           ├── urls.py                 # Router + auth endpoints
+│           ├── views.py                # AnimeViewSet, EpisodeViewSet,
+│           │                           # WatchListViewSet, CommentViewSet,
+│           │                           # NotificationViewSet, UserProfileViewSet
+│           ├── serializers.py          # DRF serializers з вкладеними даними
+│           ├── filters.py              # API фільтри
+│           ├── permissions.py          # IsAuthorOrReadOnly, IsVerified
+│           └── pagination.py           # StandardResultsPagination (24/сторінку)
 │
-├── bot/                            # Telegram бот на aiogram 3
-│   ├── main.py                    # Точка входу бота
-│   ├── handlers/                  # Обробники команд
-│   │   ├── start.py              # /start команда
-│   │   ├── search.py             # Inline search
-│   │   ├── account.py            # Прив'язка акаунта
-│   │   └── notifications.py      # Сповіщення
-│   ├── keyboards/                 # Inline та Reply клавіатури
-│   └── services/                  # Сервіси для взаємодії з Django
+├── 📁 bot/                             # 🤖 Telegram Bot (aiogram 3)
+│   ├── main.py                         # Dispatcher + middlewares + polling/webhook
+│   ├── urls.py                         # Django URL для webhook endpoint
+│   │
+│   ├── 📁 handlers/
+│   │   ├── start_handler.py            # /start, /help, deep link прив'язка
+│   │   ├── anime_handler.py            # Перегляд аніме, деталі, рейтинги
+│   │   ├── search_handler.py           # Пошук (inline mode @bot query)
+│   │   ├── watchlist_handler.py        # Управління списком перегляду
+│   │   ├── notifications_handler.py    # Налаштування сповіщень
+│   │   └── account_handler.py          # Профіль, статистика
+│   │
+│   ├── 📁 keyboards/
+│   │   ├── main_menu.py                # Reply keyboard (головне меню)
+│   │   └── inline.py                   # Inline keyboards (кнопки до повідомлень)
+│   │
+│   ├── 📁 middlewares/
+│   │   ├── auth.py                     # Авто-завантаження Django User по tg_id
+│   │   ├── ban_check.py                # Перевірка бану
+│   │   └── throttling.py               # Обмеження частоти запитів
+│   │
+│   └── 📁 utils/
+│       ├── text_formatter.py           # HTML форматування для Telegram
+│       └── pagination.py               # Пагінація результатів у боті
 │
-├── celery_tasks/                   # Celery фонові задачі
-│   ├── tasks.py                   # Завдання:
-│   │                              # - Авто-сповіщення при публікації серії
-│   │                              # - WebSocket push через Channels
-│   │                              # - Оновлення рейтингів (кожні 30 хв)
-│   │                              # - Тижневий email-дайджест
-│   └── celery_schedule.py         # Розклад задач (Celery Beat)
+├── 📁 celery/                          # ⚡ Фонові завдання
+│   ├── tasks.py                        # Celery tasks (сповіщення, статистика)
+│   └── schedules.py                    # Розклад periodic tasks
 │
-├── templates/                      # HTML шаблони
-│   ├── base.html                  # Базовий шаблон
-│   ├── anime/                     # Шаблони аніме
-│   ├── users/                     # Шаблони користувачів
-│   └── components/                # Компоненти (частини шаблонів)
+├── 📁 templates/                       # 🖼️ HTML шаблони
+│   ├── base.html                       # Базовий шаблон
+│   ├── 📁 anime/
+│   │   ├── catalog.html                # Каталог з фільтрами
+│   │   ├── detail.html                 # Сторінка аніме
+│   │   └── player.html                 # Відеоплеєр
+│   ├── 📁 users/
+│   │   ├── profile.html
+│   │   └── settings.html
+│   ├── 📁 watchlist/
+│   │   └── list.html
+│   ├── 📁 notifications/
+│   │   └── list.html
+│   ├── 📁 includes/                    # Часткові шаблони (navbar, cards...)
+│   └── 📁 emails/                      # Email шаблони
+│       ├── base_email.html
+│       ├── new_episode.html
+│       └── weekly_digest.html
 │
-├── static/                         # Статичні файли
-│   ├── css/                       # CSS стилі
-│   ├── js/                        # JavaScript файли
-│   ├── images/                    # Зображення
-│   └── fonts/                     # Шрифти
+├── 📁 static/
+│   ├── 📁 css/
+│   │   ├── main.css                    # Основні стилі
+│   │   ├── player.css                  # Стилі плеєра
+│   │   └── admin_custom.css            # Кастомізація Jazzmin
+│   ├── 📁 js/
+│   │   ├── player.js                   # HLS відеоплеєр (hls.js)
+│   │   ├── notifications.js            # WebSocket клієнт
+│   │   ├── watchlist.js                # AJAX управління списком
+│   │   └── comments.js                 # AJAX коментарі
+│   └── 📁 img/
+│       └── logo.png
 │
-├── media/                          # Медіа файли (завантаження користувачів)
-│   ├── anime/                     # Обкладинки та банери аніме
-│   ├── episodes/                  # Відео файли епізодів
-│   ├── users/                     # Аватарки користувачів
-│   └── subtitles/                 # Субтитри
+├── 📁 media/                           # Завантажені медіафайли (gitignored)
+│   ├── 📁 anime/
+│   │   ├── 📁 covers/                  # Обкладинки (400×560, WebP)
+│   │   ├── 📁 banners/                 # Банери (1920×400, WebP)
+│   │   └── 📁 screenshots/             # Скріншоти
+│   └── 📁 avatars/                     # Аватари користувачів
 │
-├── docker/                         # Docker конфігурації
-│   ├── nginx/                     # Nginx конфігурація
-│   ├── postgres/                  # PostgreSQL ініціалізація
-│   └── redis/                     # Redis конфігурація
+├── 📁 docker/
+│   ├── Dockerfile                      # Образ Django/Celery/Bot
+│   ├── docker-compose.yml              # Всі сервіси разом
+│   └── nginx.conf                      # Nginx конфіг (SSL, proxy, gzip)
 │
-├── docker-compose.yml              # Docker Compose конфігурація
-├── requirements.txt                # Python залежності
-├── .env                           # Змінні оточення
-└── manage.py                      # Django management script
+├── 📁 requirements/
+│   ├── base.txt                        # Django, DRF, aiogram, Celery...
+│   ├── development.txt                 # debug-toolbar, pytest, black...
+│   └── production.txt                  # gunicorn, whitenoise, sentry-sdk...
+│
+├── 📁 docs/                            # Документація проекту
+│   ├── api.md
+│   └── deployment.md
+│
+├── .env.example                        # Приклад змінних середовища
+├── manage.py
+└── README.md
 ```
+
 ---
 
-## 🛠 Технології
+## 🛠️ Технології
 
-### Backend:
-- **Django 4.2** - веб-фреймворк
-- **Django REST Framework** - побудова API
-- **SimpleJWT** - JWT авторизація
-- **Channels** - WebSocket підтримка
-- **Celery** - фонові задачі
-- **Redis** - кешування та broker для Celery
-- **PostgreSQL** - основна база даних
-- **django-mptt** - дерева для коментарів
-
-### Frontend:
-- **Bootstrap 5** - UI фреймворк
-- **HTMX** - динамічні запити без JavaScript
-- **Vanilla JS** - мінімум JavaScript
-
-### Bot:
-- **aiogram 3** - асинхронний Telegram bot фреймворк
-
-### DevOps:
-- **Docker & Docker Compose** - контейнеризація
-- **Nginx** - reverse proxy
-- **Gunicorn/Daphne** - WSGI/ASGI сервери
+| Категорія | Стек |
+|-----------|------|
+| **Backend** | Django 5.0, Django REST Framework 3.15 |
+| **Database** | PostgreSQL 16 |
+| **Cache / Broker** | Redis 7 |
+| **Task Queue** | Celery 5.3 + django-celery-beat |
+| **WebSockets** | Django Channels 4 + channels-redis |
+| **Telegram Bot** | aiogram 3.4 (async) |
+| **Auth** | JWT (simplejwt) + OAuth (Google, Discord) via allauth |
+| **API Docs** | drf-spectacular (Swagger UI + ReDoc) |
+| **Admin UI** | django-jazzmin (тема Darkly) |
+| **Images** | django-imagekit (WebP, thumbnails) |
+| **Comments** | django-mptt (деревоподібна структура) |
+| **Search** | PostgreSQL full-text search |
+| **Video** | HLS.js (плеєр) + Kodik/YouTube embed |
+| **Containerization** | Docker + Docker Compose + Nginx |
+| **Monitoring** | Sentry SDK |
+| **CI/CD** | GitHub Actions |
 
 ---
 
-## 📦 Встановлення
+## ⚙️ Встановлення
 
-### Вимоги:
-- Python 3.10+
-- PostgreSQL 14+ (або SQLite для розробки)
-- Redis 6+
-- Docker (опціонально)
+### Варіант 1 — Docker (рекомендовано)
 
-### 1. Клонування репозиторію
+```bash
+# 1. Клонувати репозиторій
+git clone https://github.com/your-username/animex.git
+cd animex
 
+# 2. Налаштувати змінні середовища
+cp .env.example .env
+nano .env  # заповни необхідні значення
+
+# 3. Запустити всі сервіси
+cd docker
+docker-compose up -d --build
+
+# 4. Виконати міграції
+docker-compose exec web python manage.py migrate
+
+# 5. Створити суперкористувача
+docker-compose exec web python manage.py createsuperuser
+
+# 6. Зібрати статику
+docker-compose exec web python manage.py collectstatic --noinput
 ```
-bash
-git clone <repository-url>
-cd My-anime-website
-```
-### 2. Створення віртуального оточення
 
-```
-bash
-# Windows
-python -m venv .venv
-.venv\Scripts\activate
+### Варіант 2 — Локально (для розробки)
 
-# Linux/Mac
-python3 -m venv venv
-source venv/bin/activate
-```
-### 3. Встановлення залежностей
+```bash
+# 1. Python virtual environment
+python -m venv venv
+source venv/bin/activate          # Linux/macOS
+# venv\Scripts\activate           # Windows
 
-```
-bash
-pip install --upgrade pip setuptools wheel
-pip install -r requirements.txt
-```
-### 4. Налаштування бази даних
+# 2. Залежності
+pip install -r requirements/development.txt
 
-#### Варіант A: SQLite (для розробки)
+# 3. Змінні середовища
+cp .env.example .env
 
-Налаштування вже є в `config/settings.py`:
-
-```
-python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-```
-#### Варіант B: PostgreSQL (production)
-
-Створіть `.env` файл:
-
-```
-env
-POSTGRES_DB=anime_db
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your_password
-POSTGRES_HOST=db
-POSTGRES_PORT=5432
-```
-### 5. Міграції
-
-```
-bash
-python manage.py makemigrations
+# 4. База даних і міграції
 python manage.py migrate
-```
-### 6. Створення суперкористувача
 
+# 5. Тестові дані (опціонально)
+python manage.py loaddata fixtures/sample_anime.json
+
+# 6. Запуск сервера
+python manage.py runserver
 ```
-bash
-python manage.py createsuperuser
-```
+
+> ⚠️ Для повного функціоналу потрібні запущені **Redis** та **PostgreSQL**.  
+> Встанови через Docker: `docker run -d -p 6379:6379 redis:7-alpine`
+
 ---
 
-## ⚙️ Конфігурація
+## 🔧 Конфігурація
 
-### Змінні оточення (.env)
+Скопіюй `.env.example` → `.env` та заповни значення:
 
-```
-env
-# Django
+```env
+# ── Django ────────────────────────────────────────
+SECRET_KEY=your-secret-key-minimum-50-characters
 DEBUG=True
-DJANGO_SECRET_KEY=your-secret-key-here
 ALLOWED_HOSTS=localhost,127.0.0.1
 
-# Database
-POSTGRES_DB=anime_db
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=secure_password
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
+# ── Database ──────────────────────────────────────
+DATABASE_URL=postgres://animex_user:password@localhost:5432/animex_db
 
-# Redis
+# ── Redis ─────────────────────────────────────────
 REDIS_URL=redis://localhost:6379/0
 
-# Celery
-CELERY_BROKER_URL=redis://localhost:6379/1
-CELERY_RESULT_BACKEND=redis://localhost:6379/2
+# ── Telegram Bot ──────────────────────────────────
+TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
+TELEGRAM_WEBHOOK_URL=https://animex.ua/bot/webhook/
 
-# Telegram Bot
-TELEGRAM_BOT_TOKEN=your-bot-token
-TELEGRAM_WEBHOOK_URL=https://yourdomain.com/bot/webhook/
-
-# Email
+# ── Email ─────────────────────────────────────────
 EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
 EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
 
-# CORS
-CORS_ALLOWED_ORIGINS=http://localhost:3000,https://yourdomain.com
+# ── OAuth ─────────────────────────────────────────
+GOOGLE_CLIENT_ID=...
+DISCORD_CLIENT_ID=...
+
+# ── Sentry ────────────────────────────────────────
+SENTRY_DSN=https://xxx@sentry.io/xxx
 ```
+
+### Налаштування бота
+
+1. Створи бота через [@BotFather](https://t.me/BotFather) — отримай `TELEGRAM_BOT_TOKEN`
+2. Встанови команди у BotFather:
+```
+start - Головне меню
+search - Пошук аніме
+watchlist - Мій список перегляду
+profile - Мій профіль
+notifications - Налаштування сповіщень
+top - Топ аніме
+random - Випадкове аніме
+help - Довідка
+```
+3. Увімкни **Inline Mode** для пошуку через `@animex_bot запит`
+
 ---
 
 ## 🚀 Запуск
 
-### Розробка
+### Development (усі компоненти)
 
-#### 1. Запуск Django сервера
+Відкрий **4 термінали**:
 
-```
-bash
+```bash
+# Terminal 1 — Django
 python manage.py runserver
-```
-#### 2. Запуск Redis (Windows)
 
-Завантажте Redis для Windows або використовуйте Docker:
+# Terminal 2 — Celery worker
+celery -A config worker -l info --concurrency=4
 
-```
-bash
-docker run -d -p 6379:6379 redis:latest
-```
-#### 3. Запуск Celery Worker
+# Terminal 3 — Celery beat (scheduler)
+celery -A config beat -l info
 
+# Terminal 4 — Telegram bot (polling)
+python -m bot.main
 ```
-bash
-# Windows
-celery -A config worker --pool=solo --loglevel=info
 
-# Linux/Mac
-celery -A config worker --loglevel=info
-```
-#### 4. Запуск Celery Beat (планувальник)
+### Production (Docker)
 
-```
-bash
-celery -A config beat --loglevel=info
-```
-#### 5. Запуск Daphne (ASGI для WebSocket)
+```bash
+cd docker
+docker-compose up -d
 
-```
-bash
-daphne -b 0.0.0.0 -p 8001 config.asgi:application
-```
-### Production з Docker
+# Моніторинг логів
+docker-compose logs -f web
+docker-compose logs -f celery_worker
+docker-compose logs -f telegram_bot
 
+# Перезапуск одного сервісу
+docker-compose restart web
 ```
-bash
-# Збірка та запуск всіх контейнерів
-docker-compose up -d --build
 
-# Перегляд логів
-docker-compose logs -f
+### Корисні команди
 
-# Зупинка
-docker-compose down
+```bash
+# Скинути кеш
+python manage.py shell -c "from django.core.cache import cache; cache.clear()"
+
+# Оновити рейтинги вручну
+python manage.py shell -c "from celery.tasks import update_anime_scores; update_anime_scores()"
+
+# Встановити webhook для бота
+python manage.py set_telegram_webhook
+
+# Імпорт аніме з MyAnimeList (кастомна команда)
+python manage.py import_mal --id 21  # One Piece
 ```
-### Доступні сервіси в Docker:
-- **Django** - http://localhost:8000
-- **PostgreSQL** - localhost:5432
-- **Redis** - localhost:6379
-- **pgAdmin** - http://localhost:8080
-- **Flower (Celery monitor)** - http://localhost:5555
 
 ---
 
 ## 📡 API Документація
 
-Після запуску сервера доступна повна API документація:
+Інтерактивна документація доступна після запуску:
 
-### Swagger UI
-```
+| Інтерфейс | URL |
+|-----------|-----|
+| **Swagger UI** | `http://localhost:8000/api/schema/swagger-ui/` |
+| **ReDoc** | `http://localhost:8000/api/schema/redoc/` |
+| **OpenAPI JSON** | `http://localhost:8000/api/schema/` |
 
-http://localhost:8000/api/schema/swagger-ui/
-```
-### ReDoc
-```
+### Основні ендпоінти
 
-http://localhost:8000/api/docs/
+#### Аутентифікація
+```http
+POST /api/v1/auth/token/           # Отримати JWT (email + password)
+POST /api/v1/auth/token/refresh/   # Оновити access token
+POST /api/v1/auth/registration/    # Реєстрація
 ```
-### OpenAPI Schema
-```
-
-http://localhost:8000/api/schema/
-```
-### Основні Endpoint:
 
 #### Аніме
-- `GET /api/v1/anime/` - список всіх аніме
-- `GET /api/v1/anime/{id}/` - деталі аніме
-- `GET /api/v1/anime/featured/` - популярні аніме
-- `GET /api/v1/anime/trending/` - тренди
-- `GET /api/v1/anime/top_rated/` - найвищий рейтинг
-- `POST /api/v1/anime/{id}/rate/` - оцінити аніме
+```http
+GET  /api/v1/anime/                        # Каталог (фільтри, сортування, пагінація)
+GET  /api/v1/anime/{slug}/                 # Деталі аніме
+GET  /api/v1/anime/{slug}/episodes/        # Список серій
+GET  /api/v1/anime/{slug}/episodes/{n}/    # Деталі серії + джерела відео
+POST /api/v1/anime/{slug}/rate/            # Поставити оцінку
 
-#### Епізоди
-- `GET /api/v1/episodes/` - список епізодів
-- `POST /api/v1/episodes/{id}/update_progress/` - оновити прогрес перегляду
+# Фільтри каталогу:
+# ?genre=action&year=2024&type=tv&status=ongoing&ordering=-score_site
+```
 
-#### Списки перегляду
-- `GET /api/v1/watchlist/` - мій список
-- `POST /api/v1/watchlist/` - додати до списку
-- `GET /api/v1/watchlist/by_status/` - фільтр по статусу
+#### Список перегляду
+```http
+GET    /api/v1/watchlist/          # Мій список (авторизація обов'язкова)
+POST   /api/v1/watchlist/          # Додати/оновити запис
+DELETE /api/v1/watchlist/{id}/     # Видалити
+
+# Оновити прогрес серії:
+POST /api/v1/watchlist/progress/
+{
+  "episode_id": 123,
+  "position": 840,        # секунди
+  "is_watched": false
+}
+```
 
 #### Коментарі
-- `GET /api/v1/comments/` - всі коментарі
-- `POST /api/v1/comments/` - створити коментар
-- `POST /api/v1/comments/{id}/like/` - вподобати
-- `POST /api/v1/comments/{id}/report/` - поскаржитися
+```http
+GET  /api/v1/comments/?anime={slug}         # Коментарі до аніме
+GET  /api/v1/comments/?episode={id}         # Коментарі до серії
+POST /api/v1/comments/                       # Додати коментар
+POST /api/v1/comments/{id}/react/            # Лайк / дизлайк
+POST /api/v1/comments/{id}/report/           # Поскаржитись
+```
 
 #### Сповіщення
-- `GET /api/v1/notifications/` - мої сповіщення
-- `POST /api/v1/notifications/{id}/mark_read/` - прочитати
-- `POST /api/v1/notifications/mark_all_read/` - прочитати все
+```http
+GET  /api/v1/notifications/                  # Мої сповіщення
+POST /api/v1/notifications/mark-all-read/    # Позначити всі як прочитані
+```
 
-#### Пошук
-- `GET /api/v1/search/?q=query&type=all` - пошук по всьому
+### Приклад запиту
 
-#### Авторизація
-- `POST /api/v1/token/` - отримати JWT токен
-- `POST /api/v1/token/refresh/` - оновити токен
+```bash
+# Отримати JWT
+curl -X POST http://localhost:8000/api/v1/auth/token/ \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "secret"}'
+
+# Запит з авторизацією
+curl http://localhost:8000/api/v1/watchlist/ \
+  -H "Authorization: Bearer <access_token>"
+```
 
 ---
 
 ## 🤖 Telegram Бот
 
-### Функціонал:
+### Команди
 
-#### 1. Inline Search
-Користувачі можуть шукати аніме прямо в чатах через `@animex_bot`
+| Команда | Опис |
+|---------|------|
+| `/start` | Головне меню |
+| `/search <назва>` | Пошук аніме |
+| `/watchlist` | Переглянути свій список |
+| `/top` | Топ аніме за рейтингом |
+| `/random` | Випадкове аніме |
+| `/profile` | Статистика перегляду |
+| `/notifications` | Налаштування сповіщень |
+| `/link` | Прив'язати акаунт AnimeX |
 
-#### 2. Прив'язка акаунта
-Глибоке посилання для прив'язки Telegram до облікового запису:
-```
+### Inline режим
 
-/start connect_abc123
-```
-#### 3. Сповіщення
-- Нові епізоди улюблених аніме
-- Відповіді на коментарі
-- Системні повідомлення
-
-#### 4. Команди бота:
-
-```
-
-/start - Запустити бота
-/search - Пошук аніме
-/mylist - Мій список перегляду
-/trending - Трендові аніме
-/random - Випадкове аніме
-/settings - Налаштування сповіщень
-/help - Допомога
-```
-### Запуск бота:
+Пошук прямо в будь-якому чаті без переходу в бота:
 
 ```
-bash
-# Встановлення залежностей бота
-pip install aiogram==3.4.1
-
-# Запуск
-python bot/main.py
+@animex_bot Наруто
+@animex_bot Attack on Titan
+@animex_bot ваншот
 ```
-Або через Docker:
+
+### Прив'язка акаунта
+
+Щоб отримувати персональні сповіщення:
+
+1. Зайди на сайт AnimeX → **Налаштування** → **Telegram**
+2. Натисни **«Прив'язати Telegram»**
+3. Перейди за згенерованим посиланням
+4. Бот підтвердить прив'язку
+
 ```
-bash
-docker-compose up bot
+Посилання має вигляд:
+https://t.me/animex_bot?start=link_xxxxxxxxxxxxxxxx
 ```
----
 
-## 📊 Моделі Даних
+### Типи сповіщень
 
-### Основні моделі:
-
-#### Anime
-- Назви (українська, англійська, оригінал)
-- Опис, обкладинка, банер
-- Жанри, студії
-- Тип, статус, кількість епізодів
-- Рейтинг, популярність
-
-#### Episode
-- Номер епізоду, назва
-- Відео файл/URL, HLS потік
-- Тривалість, дата виходу
-- Перегляди
-
-#### User (кастомний)
-- Telegram ID та username
-- Досягнення
-- Стрік перегляду
-- Загальний час перегляду
-
-#### WatchList
-- 6 статусів: watching, completed, on_hold, dropped, plan_to_watch, rewatching
-- Прогрес епізодів
-- Оцінки, нотатки
-
-#### Comment (MPTT)
-- Деревоподібна структура
-- Реакції, скарги
-- Spoiler теги
+| Подія | Сайт | Telegram | Email |
+|-------|------|----------|-------|
+| Нова серія | ✅ | ✅ (налаштовується) | ✅ (дайджест) |
+| Відповідь на коментар | ✅ | ✅ | ❌ |
+| Нове досягнення | ✅ | ❌ | ❌ |
+| Завершення аніме | ✅ | ✅ | ❌ |
+| Системні оголошення | ✅ | ✅ | ✅ |
 
 ---
 
-## 🎯 Roadmap
+## 🗄️ Моделі Бази Даних
 
-- [ ] Мобільний додаток (React Native)
-- [ ] Офлайн перегляд
-- [ ] Соціальні функції (друзі, активність)
-- [ ] Стрімінг декількох джерел
-- [ ] AI рекомендації
-- [ ] Мультипрофільність
-- [ ] Батьківський контроль
+### ER-діаграма (спрощена)
 
----
-
-## 📝 Ліцензія
-
-Цей проект створено для навчальних цілей.
-
----
-
-## 👥 Контакти
-
-Для питань та пропозицій:
-- Email: your-email@example.com
-- Telegram: @your_username
-
----
-
-## 🙏 Подяки
-
-Дякуємо всім контриб'юторам та користувачам!
-
----
-
-**Made with ❤️ for anime fans**
+```
+User ──────────────── WatchList ──── Anime
+ │                                    │   │
+ ├── EpisodeProgress ── Episode ──────┘   │
+ │                         │              │
+ ├── Comment ──────────────┘          Genre (M2M)
+ │     └── CommentReaction            Studio (M2M)
+ │                                    Author (M2M)
+ ├── UserRating ─────────── Anime         │
+ │                                    Translation
+ ├── Notification                         │
+ │                                    VideoSource
+ ├── UserAchievement
+ │
+ └── TelegramLinkToken
 ```
 
+### Ключові моделі
 
-Цей README детально описує весь ваш проект, структуру, технології та інструкції з використання. Всі шляхи та назви відповідають структурі, яку ви створили!
+**`Anime`** — центральна модель з полями:
+`title_ua/en/jp`, `slug`, `cover`, `banner`, `anime_type`, `status`, `year`, `season`, `episodes_total`, `score_site`, `views_count`, `mal_id`, `anilist_id`, `is_published`, `is_featured`, `is_adult`
+
+**`Episode`** — серії:
+`anime (FK)`, `number`, `title`, `air_date`, `duration`, `is_filler`, `views_count`
+
+**`VideoSource`** — джерела відео:
+`episode (FK)`, `hosting` (Kodik/YouTube/Internal...), `quality` (1080p/720p/480p), `url`, `translation (FK)`
+
+**`WatchList`** — список перегляду:
+`user`, `anime`, `status` (6 варіантів), `score`, `episodes_watched`, `notes`, `is_favorite`
+
+---
+
+## 🔔 WebSocket & Сповіщення
+
+### Підключення на frontend
+
+```javascript
+// Підключення до WS для real-time сповіщень
+const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+const ws = new WebSocket(`${protocol}//${location.host}/ws/notifications/`);
+
+ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+
+    switch (data.type) {
+        case 'notification':
+            showToast(data.title, data.message, data.link);
+            updateUnreadBadge();
+            break;
+        case 'unread_count':
+            setUnreadBadge(data.count);
+            break;
+        case 'all_read':
+            clearUnreadBadge();
+            break;
+    }
+};
+
+// Позначити сповіщення прочитаним
+ws.send(JSON.stringify({
+    action: 'mark_read',
+    notification_id: 42
+}));
+
+// Позначити всі прочитаними
+ws.send(JSON.stringify({ action: 'mark_all_read' }));
+```
+
+### URL WebSocket
+
+```
+ws://localhost:8000/ws/notifications/
+```
+
+---
+
+## ⚡ Celery Tasks
+
+### Автоматичні задачі
+
+| Задача | Тригер | Опис |
+|--------|--------|------|
+| `send_new_episode_notifications` | При публікації серії | Сповіщення всім у watchlist |
+| `push_notification_to_ws` | Після створення Notification | WebSocket push |
+| `send_telegram_episode_notification` | При публікації серії | Повідомлення в Telegram |
+| `update_anime_scores` | Кожні 30 хв | Перерахунок рейтингів |
+| `update_user_stats` | Щогодини | Статистика переглядів |
+| `cleanup_expired_tokens` | Кожні 30 хв | Видалення старих токенів |
+| `send_weekly_digest` | Щопонеділка 10:00 | Email дайджест |
+
+### Черги Celery
+
+```bash
+# Запуск з окремими чергами
+celery -A config worker -l info -Q default,notifications,emails --concurrency=4
+```
+
+---
+
+## 🎨 Адмін-панель
+
+Доступна за адресою `/admin/` з темою **Darkly** (Jazzmin).
+
+### Можливості
+
+- 🖼️ Прев'ю обкладинок прямо в списку аніме
+- ⚡ Batch-дії: публікація, знімання з публікації, додавання на головну
+- 📊 Фільтри: жанр, рік, тип, статус, чи опубліковано
+- 🔔 Автоматичне надсилання Celery-задач при публікації серій
+- 📱 Адаптивний інтерфейс
+
+### Налаштування теми
+
+```python
+# config/settings/base.py
+JAZZMIN_UI_TWEAKS = {
+    "theme": "darkly",          # або: cyborg, slate, superhero
+    "sidebar": "sidebar-dark-purple",
+    "navbar": "navbar-dark",
+    "accent": "accent-purple",
+}
+```
+
+---
+
+## 🧪 Тестування
+
+```bash
+# Запустити всі тести
+pytest
+
+# З покриттям коду
+pytest --cov=apps --cov-report=html
+
+# Тільки конкретний модуль
+pytest apps/anime/tests.py -v
+
+# Тести API
+pytest apps/api/ -v
+
+# Тести бота
+pytest bot/tests/ -v --asyncio-mode=auto
+```
+
+### Структура тестів
+
+```
+apps/
+  anime/tests/
+    test_models.py
+    test_views.py
+    test_api.py
+  users/tests/
+  watchlist/tests/
+bot/tests/
+  test_handlers.py
+  test_middlewares.py
+```
+
+---
+
+## 🚢 Деплой
+
+### Docker Compose (production)
+
+```
+┌─────────────────────────────────────────────┐
+│                   Nginx :80/:443             │
+│         (SSL termination, gzip, cache)       │
+└────────────┬──────────────┬─────────────────┘
+             │              │
+     ┌───────▼──────┐  ┌────▼────────┐
+     │  Django :8000 │  │ ASGI :8001  │
+     │  (Gunicorn)   │  │ (Daphne/WS) │
+     └───────┬───────┘  └─────┬───────┘
+             │                │
+     ┌───────▼────────────────▼───────┐
+     │           PostgreSQL           │
+     │           Redis                │
+     └────────────────────────────────┘
+             │                │
+     ┌───────▼───────┐ ┌──────▼────────┐
+     │ Celery Worker │ │  Celery Beat   │
+     │ Celery Worker │ └───────────────┘
+     └───────────────┘
+             │
+     ┌───────▼───────┐
+     │ Telegram Bot  │
+     └───────────────┘
+```
+
+### SSL (Let's Encrypt)
+
+```bash
+# Автоматичний SSL через certbot
+docker-compose -f docker-compose.yml -f docker-compose.ssl.yml up -d certbot
+```
+
+### Змінні для production
+
+```env
+DEBUG=False
+ALLOWED_HOSTS=animex.ua,www.animex.ua
+DATABASE_URL=postgres://user:pass@db:5432/animex_db
+AWS_STORAGE_BUCKET_NAME=animex-media    # для медіа на S3
+SENTRY_DSN=https://...@sentry.io/...
+```
+
+---
+
+## 📊 Статистика проекту
+
+| Метрика | Значення |
+|---------|----------|
+| Моделей БД | 20+ |
+| API ендпоінтів | 40+ |
+| Celery tasks | 7 |
+| Команди бота | 8 |
+| Типів сповіщень | 8 |
+| Сервісів Docker | 8 |
+
+---
+
+<div align="center">
+
+Made with ❤️ for anime fans 🌸
+
+</div>
